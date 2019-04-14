@@ -9,6 +9,36 @@ logging.basicConfig(level=logging.INFO)
 
 sessionStorage = {}
 
+time_buttons = [
+    {
+        'title': 'Завтра.',
+        'hide': True
+    },
+    {
+        'title': 'Через три дня.',
+        'hide': True
+    },
+    {
+        'title': 'Через неделю.',
+        'hide': True
+    }
+]
+
+choice_buttons = [
+    {
+        'title': 'Спасибо, это всё.',
+        'hide': True
+    },
+    {
+        'title': 'Назови погоду на другую дату.',
+        'hide': True
+    },
+    {
+        'title': 'Назови погоду в другом месте.',
+        'hide': True
+    }
+]
+
 
 @app.route('/post', methods=['POST'])
 def main():
@@ -33,32 +63,20 @@ def handle_dialog(res, req):
             'place': None,  # Тут будет храниться место.
             'time': 'now',  # Тут будет храниться время (через 3 дня, через неделю) и т. п.
             'waiting_for_time': False,
-            'waiting_for_place': False
+            'waiting_for_place': True
         }
         return
 
-    if sessionStorage[user_id]['place'] is None or sessionStorage[user_id]['waiting_for_place']:
+    if sessionStorage[user_id]['waiting_for_place']:
         city = get_place_from_responce(req)
         if city is None:
             res['response']['text'] = 'Не расслышала город. Повтори, пожалуйста!'
         else:
             sessionStorage[user_id]['place'] = city
+            sessionStorage[user_id]['waiting_for_place'] = False
 
             res['response']['text'] = f'Отлично, я знаю этот город. Сегодня в нём ' + get_weather(city)
-            res['response']['buttons'] = [
-                {
-                    'title': 'Спасибо, это всё.',
-                    'hide': True
-                },
-                {
-                    'title': 'Назови погоду на другую дату.',
-                    'hide': True
-                },
-                {
-                    'title': 'Назови погоду в другом месте.',
-                    'hide': True
-                }
-            ]
+            res['response']['buttons'] = choice_buttons
             return
     elif sessionStorage[user_id]['waiting_for_time']:
         correct_requests = {'Завтра.': 1,
@@ -66,6 +84,7 @@ def handle_dialog(res, req):
                             'Через неделю.': 7}  # Возможные варианты запросов - те, которые предлагались в диалоге.
         if req['request']['original_utterance'] in correct_requests:
             sessionStorage[user_id]['waiting_for_time'] = False
+
             if correct_requests[req['request']['original_utterance']] == 1:
                 res['response']['text'] = f'Завтра в городе ' + sessionStorage[user_id]['place'] + get_weather(
                     sessionStorage[user_id]['place'], time=1)
@@ -75,7 +94,10 @@ def handle_dialog(res, req):
             else:
                 res['response']['text'] = f'Через 7 дней в городе ' + sessionStorage[user_id]['place'] + get_weather(
                     sessionStorage[user_id]['place'], time=7)
-
+            res['response']['buttons'] = choice_buttons
+        else:
+            res['response']['text'] = f'Некорректный запрос.'
+            res['response']['buttons'] = time_buttons
     else:
         if req['request']['original_utterance'] == 'Спасибо, это всё.':
             res['response']['text'] = 'Приятно было работать с вами!'
@@ -83,32 +105,15 @@ def handle_dialog(res, req):
         elif req['request']['original_utterance'] == 'Назови погоду на другую дату.':
             res['response']['text'] = 'Тогда скажите, погоду через сколько дней вам назвать.'
             sessionStorage[user_id]['waiting_for_time'] = True
-            res['response']['buttons'] = [
-                {
-                    'title': 'Завтра.',
-                    'hide': True
-                },
-                {
-                    'title': 'Через три дня.',
-                    'hide': True
-                },
-                {
-                    'title': 'Через неделю.',
-                    'hide': True
-                }
-            ]
+            res['response']['buttons'] = time_buttons
         elif req['request']['original_utterance'] == 'Назови погоду в другом месте.':
             res['response']['text'] = 'Тогда скажите, погоду где вам назвать.'
-            sessionStorage[user_id]['waiting_for_time'] = True
+            sessionStorage[user_id]['waiting_for_place'] = True
 
 
-def get_place_from_responce(req):
-    # перебираем сущности
+def get_place_from_responce(req):  # Вытаскиваем название города из запроса.
     for entity in req['request']['nlu']['entities']:
-        # находим сущность с типом 'YANDEX.FIO'
         if entity['type'] == 'YANDEX.GEO':
-            # Если есть сущность с ключом 'first_name', то возвращаем её значение.
-            # Во всех остальных случаях возвращаем None.
             return entity['value'].get('city', None)
 
 
