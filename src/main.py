@@ -109,6 +109,9 @@ def handle_dialog(res, req):
         elif req['request']['original_utterance'] == 'Назови погоду в другом месте.':
             res['response']['text'] = 'Тогда скажите, погоду где вам назвать.'
             sessionStorage[user_id]['waiting_for_place'] = True
+        else:
+            res['response']['text'] = 'Простите, я не понимаю вас. Выберите одну из кнопок на экране.'
+            res['response']['buttons'] = choice_buttons
 
 
 def get_place_from_responce(req):  # Вытаскиваем название города из запроса.
