@@ -86,14 +86,15 @@ def handle_dialog(res, req):
             sessionStorage[user_id]['waiting_for_time'] = False
 
             if correct_requests[req['request']['original_utterance']] == 1:
-                res['response']['text'] = f'Завтра в городе ' + sessionStorage[user_id]['place'] + get_weather(
-                    sessionStorage[user_id]['place'], time=1)
+                res['response']['text'] = f'Завтра в городе '
             elif correct_requests[req['request']['original_utterance']] == 3:
-                res['response']['text'] = f'Через 3 дня в городе ' + sessionStorage[user_id]['place'] + get_weather(
-                    sessionStorage[user_id]['place'], time=3)
+                res['response']['text'] = f'Через 3 дня в городе '
             else:
-                res['response']['text'] = f'Через 7 дней в городе ' + sessionStorage[user_id]['place'] + get_weather(
-                    sessionStorage[user_id]['place'], time=7)
+                res['response']['text'] = f'Через 7 дней в городе '
+
+            res['response']['text'] += sessionStorage[user_id]['place'] + ' ' + get_weather(
+                sessionStorage[user_id]['place'], time=correct_requests[req['request']['original_utterance']])
+
             res['response']['buttons'] = choice_buttons
         else:
             res['response']['text'] = f'Некорректный запрос.'
