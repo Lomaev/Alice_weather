@@ -15,11 +15,11 @@ time_buttons = [
         'hide': True
     },
     {
-        'title': 'Через три дня.',
+        'title': 'Послезавтра.',
         'hide': True
     },
     {
-        'title': 'Через неделю.',
+        'title': 'Через 3 дня.',
         'hide': True
     }
 ]
@@ -61,7 +61,6 @@ def handle_dialog(res, req):
         res['response']['text'] = 'Пожалуйста, назовите город, погоду в котором вы хотите узнать.'
         sessionStorage[user_id] = {
             'place': None,  # Тут будет храниться место.
-            'time': 'now',  # Тут будет храниться время (через 3 дня, через неделю) и т. п.
             'waiting_for_time': False,
             'waiting_for_place': True
         }
@@ -80,17 +79,17 @@ def handle_dialog(res, req):
             return
     elif sessionStorage[user_id]['waiting_for_time']:
         correct_requests = {'Завтра.': 1,
-                            'Через три дня.': 3,
-                            'Через неделю.': 7}  # Возможные варианты запросов - те, которые предлагались в диалоге.
+                            'Послезавтра.': 2,
+                            'Через 3 дня.': 3}  # Возможные варианты запросов - те, которые предлагались в диалоге.
         if req['request']['original_utterance'] in correct_requests:
             sessionStorage[user_id]['waiting_for_time'] = False
 
             if correct_requests[req['request']['original_utterance']] == 1:
                 res['response']['text'] = f'Завтра в городе '
             elif correct_requests[req['request']['original_utterance']] == 3:
-                res['response']['text'] = f'Через 3 дня в городе '
+                res['response']['text'] = f'Послезавтра в городе '
             else:
-                res['response']['text'] = f'Через 7 дней в городе '
+                res['response']['text'] = f'Через 3 дня в городе '
 
             res['response']['text'] += sessionStorage[user_id]['place'] + ' ' + get_weather(
                 sessionStorage[user_id]['place'], time=correct_requests[req['request']['original_utterance']])

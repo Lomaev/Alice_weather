@@ -27,7 +27,8 @@ def get_weather(place, time=0):
 
             for prediction in data['list']:
                 if prediction['dt_txt'] == '%s 15:00:00' % (date):
-                    return str(prediction)
+                    clouds = 'облачно' if prediction['clouds']['all'] > 60 else 'малооблачно'
+                    return prediction['weather'][0]['description'] + ', ' + clouds + ', температура ' + str(prediction['main']['temp']) + '°C.'
             return 'Error!'
 
     except Exception as e:
